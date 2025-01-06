@@ -1,32 +1,60 @@
-// index.js
-// where your node app starts
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
-// init project
-var express = require('express');
-var app = express();
+dotenv.config();
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+const app = express();
 
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
+app.use(cors({ optionsSuccessStatus: 200 }));  // some legacy browsers choke on 204
+app.use(express.static("public"));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
+app.get("/", (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+app.get("/api/:date", function (req, res) {
+  let timestamp = req.params.date; // changed code 'req.params.date'
+  if (timestamp.match(/\d{5,}/)) {
+    timestamp = +timestamp;
+  }
+  console.log(timestamp);
+  let date = new Date(timestamp);
+  if (date.toUTCString() == "Invalid Date") {
+    res.json({ error: date.toUTCString() });
+
+    console.log({ error: date });
+  }
+  res.json({ unix: date.valueOf(), utc: date.toUTCString() });
+});
+
+// changed code for ' app.get ("/api" '
+app.get("/api", (req, res) => {
+  let date = new Date();
+  res.json({ unix: date.valueOf(), utc: date.toUTCString() });
+});
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  console.log({ greeting: "hello API" });
+  res.json({ greeting: 'hello API' });
 });
 
+// API endpoint for whoami
+app.get("/api/whoami", (req, res) => {
+  console.log({
+    ipaddress: req.ip,
+    language: req.headers["accept-language"],
+    software: req.headers["user-agent"],
+  });
+  res.json({
+    ipaddress: req.ip,
+    language: req.headers["accept-language"],
+    software: req.headers["user-agent"],
+  });
+});
 
-
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
