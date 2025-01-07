@@ -13,25 +13,25 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-app.get("/api/:date", function (req, res) {
-  let timestamp = req.params.date; // changed code 'req.params.date'
-  if (timestamp.match(/\d{5,}/)) {
-    timestamp = +timestamp;
+app.get("/api/timestamp/:date_string?", (req, res) => {
+  let dateString = req.params.date_string;
+  console.log(`Received date string: ${dateString}`);
+  let date;
+  if (!dateString) {
+    date = new Date();
+  } else {
+    if (/\d{5,}/.test(dateString)) {
+      dateString = parseInt(dateString);
+    }
+    date = new Date(dateString);
   }
-  console.log(timestamp);
-  let date = new Date(timestamp);
-  if (date.toUTCString() == "Invalid Date") {
-    res.json({ error: date.toUTCString() });
-
-    console.log({ error: date });
+  console.log(`Parsed date: ${date}`);
+  if (date.toString() === "Invalid Date") {
+    res.json({ error: "Invalid Date" });
+    return; // Add return statement here
+  } else {
+    res.json({ unix: date.getTime(), utc: date.toUTCString() });
   }
-  res.json({ unix: date.valueOf(), utc: date.toUTCString() });
-});
-
-// changed code for ' app.get ("/api" '
-app.get("/api", (req, res) => {
-  let date = new Date();
-  res.json({ unix: date.valueOf(), utc: date.toUTCString() });
 });
 
 // your first API endpoint... 
