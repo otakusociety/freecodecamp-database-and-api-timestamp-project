@@ -16,23 +16,34 @@ app.get("/", (req, res) => {
 app.get("/api/timestamp/:date_string?", (req, res) => {
   let dateString = req.params.date_string;
   console.log(`Received date string: ${dateString}`);
+
   let date;
+
   if (!dateString) {
+    // If no date string is provided, use the current date
     date = new Date();
   } else {
-    if (/\d{5,}/.test(dateString)) {
-      dateString = parseInt(dateString);
+    // Check if the dateString is a valid Unix timestamp (all digits)
+    if (/^\d+$/.test(dateString)) {
+      // If it's a valid Unix timestamp, parse it as such
+      date = new Date(parseInt(dateString));
+    } else {
+      // Otherwise, treat it as a human-readable date string
+      date = new Date(dateString);
     }
-    date = new Date(dateString);
   }
+
   console.log(`Parsed date: ${date}`);
+
+  // If the date is invalid, send an error response
   if (date.toString() === "Invalid Date") {
     res.json({ error: "Invalid Date" });
-    return; // Add return statement here
   } else {
+    // Return the Unix timestamp and UTC string
     res.json({ unix: date.getTime(), utc: date.toUTCString() });
   }
 });
+
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
