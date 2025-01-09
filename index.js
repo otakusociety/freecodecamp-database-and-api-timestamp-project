@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose")
 const MongoDB =require("mongodb")
+var bodyParser = require('body-parser');
 
 dotenv.config();
 
@@ -10,6 +11,11 @@ const app = express();
 
 app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
 app.use(express.static("public"));
+
+// parse application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+// parse application/json
+app.use(express.json());
 
 const uri = process.env.MONGO_URI;
 
@@ -68,13 +74,42 @@ app.get("/urlshortener", (req, res) => {
   res.sendFile(__dirname + '/views/urlshortener.html');
 });
 
+
 // API endpoint for shorturl
 app.post("/api/shorturl", (req, res) => {
   console.log("Shortening URL");
-  res.json({ error: "Not yet implemented" });
-  console.log({error: "Not yet implemented"});
-
+  console.log(req.body, "< = req.body");
+  res.json({ "success": "post request processed" });
+  console.log("post request processed");
 });
+
+
+
+// Serve the exercise tracker microservice page
+app.get("/exercisetracker", (req, res) => {
+  res.sendFile(__dirname + '/views/exercisetracker.html');
+});
+// API endpoint for exercisetracker
+app.post("/api/exercise/new-user", (req, res) => {
+  console.log("Creating new user");
+  console.log(req.body, "< = req.body");
+  res.json({ "success": "post request processed" });
+  console.log("post request processed");
+});
+app.post("/api/exercise/add", (req, res) => {
+  console.log("Adding exercise");
+  console.log(req.body, "< = req.body");
+  res.json({ "success": "post request processed" });
+  console.log("post request processed");
+});
+app.get("/api/exercise/log", (req, res) => {
+  console.log("Fetching exercise log");
+  console.log(req.body, "< = req.body");
+  res.json({ "success": "get request processed" });
+  console.log("get request processed");
+}
+);
+
 
 
 
