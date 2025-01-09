@@ -41,8 +41,16 @@ app.get("/api/whoami", (req, res) => {
 });
 
 // Serve the url shortener microservice page
-app.get("/shorturl", (req, res) => {
+app.get("/urlshortener", (req, res) => {
   res.sendFile(__dirname + '/views/urlshortener.html');
+});
+
+// API endpoint for shorturl
+app.post("/api/shorturl", (req, res) => {
+  console.log("Shortening URL");
+  res.json({ error: "Not yet implemented" });
+  console.log({error: "Not yet implemented"});
+
 });
 
 
