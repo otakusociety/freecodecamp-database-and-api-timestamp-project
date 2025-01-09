@@ -1,10 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose")
-const MongoDB =require("mongodb")
-var bodyParser = require('body-parser');
-var shortid = require('shortid');
+const mongoose = require("mongoose");
+const shortid = require("shortid");
 
 dotenv.config();
 
@@ -36,12 +34,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/home.html");
 });
-
 
 // API endpoint for hello
 app.get("/api/hello", function (req, res) {
@@ -49,11 +45,11 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-
 // Serve the header parser microservice page
 app.get("/reverse", (req, res) => {
   res.sendFile(__dirname + '/views/headerparser.html');
 });
+
 // API endpoint for whoami
 app.get("/api/whoami", (req, res) => {
   console.log({
@@ -68,11 +64,10 @@ app.get("/api/whoami", (req, res) => {
   });
 });
 
-// Serve the url shortener microservice page
+// Serve the URL shortener microservice page
 app.get("/urlshortener", (req, res) => {
   res.sendFile(__dirname + '/views/urlshortener.html');
 });
-
 
 // Build a schema and model to store the original URL and the shortened URL
 const shortUrlSchema = new mongoose.Schema({
@@ -83,68 +78,66 @@ const shortUrlSchema = new mongoose.Schema({
 
 const ShortUrl = mongoose.model("ShortUrl", shortUrlSchema);
 
+// Improved URL validation function
+const isValidUrl = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
+
 // API endpoint for shorturl
 app.post("/api/shorturl", async (req, res) => {
-  let suffix = shortid.generate();
-  console.log(suffix, "< = shortid.generate()");
   let client_requested_url = req.body.url;
-  console.log(client_requested_url, "< = req.body.url");
+  console.log(`Received URL: ${client_requested_url}`);
 
-  let newShortUrl = new ShortUrl({ original_url: client_requested_url, short_url: suffix, suffix: suffix });
-  
+  if (!isValidUrl(client_requested_url)) {
+    console.log("Invalid URL");
+    return res.status(400).json({ error: "Invalid URL" });
+  }
+
+  let suffix = shortid.generate();
+  let newShortUrl = new ShortUrl({ original_url: client_requested_url, short_url: suffix, suffix });
+
   try {
     await newShortUrl.save();
-    console.log("Shortening URL");
-    res.json({ "Original_url": client_requested_url, "Short_url": suffix });
-    console.log({"Success": "post request processed", "Short Url": suffix, "Original URL": client_requested_url});
+    res.json({ Original_url: client_requested_url, Short_url: suffix });
   } catch (error) {
-    console.error(error);
+    console.error("Failed to save the URL", error);
     res.status(500).json({ error: "Failed to save the URL" });
   }
 });
-
-
 
 // Serve the exercise tracker microservice page
 app.get("/exercisetracker", (req, res) => {
   res.sendFile(__dirname + '/views/exercisetracker.html');
 });
-// API endpoint for exercisetracker
+
+// API endpoint for exercise tracker
 app.post("/api/exercise/new-user", (req, res) => {
   console.log("Creating new user");
   console.log(req.body, "< = req.body");
-  res.json({ "success": "post request processed" });
-  console.log("post request processed");
+  res.json({ success: "post request processed" });
 });
+
 app.post("/api/exercise/add", (req, res) => {
   console.log("Adding exercise");
   console.log(req.body, "< = req.body");
-  res.json({ "success": "post request processed" });
-  console.log("post request processed");
+  res.json({ success: "post request processed" });
 });
+
 app.get("/api/exercise/log", (req, res) => {
-  console.log("Fetching exercise log");
-  console.log(req.body, "< = req.body");
-  res.json({ "success": "get request processed" });
-  console.log("get request processed");
-}
-);
-
-
-
-
-/*// Serve the exercise tracker microservice page
-app.get("/exercise", (req, res) => {
-  res.sendFile(__dirname + '/views/exercisetracker.html');
-});*/
-
-
-
+  console.log(req.query, "< = req.query");
+  res.json({ success: "get request processed" });
+});
 
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
   res.sendFile(__dirname + '/views/timestamp.html');
 });
+
 // API endpoint to handle timestamp requests
 app.get("/api/:date?", (req, res) => {
   let dateParam = req.params.date;
@@ -184,5 +177,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 
