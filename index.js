@@ -20,6 +20,11 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
+
+// Serve the header parser microservice page
+app.get("/reverse", (req, res) => {
+  res.sendFile(__dirname + '/views/headerparser.html');
+});
 // API endpoint for whoami
 app.get("/api/whoami", (req, res) => {
   console.log({
