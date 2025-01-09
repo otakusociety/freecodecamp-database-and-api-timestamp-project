@@ -11,8 +11,9 @@ app.use(express.static("public"));
 
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html");
+  res.sendFile(__dirname + "/views/home.html");
 });
+
 
 // API endpoint for hello
 app.get("/api/hello", function (req, res) {
@@ -39,6 +40,25 @@ app.get("/api/whoami", (req, res) => {
   });
 });
 
+// Serve the url shortener microservice page
+app.get("/shorturl", (req, res) => {
+  res.sendFile(__dirname + '/views/urlshortener.html');
+});
+
+
+
+/*// Serve the exercise tracker microservice page
+app.get("/exercise", (req, res) => {
+  res.sendFile(__dirname + '/views/exercisetracker.html');
+});*/
+
+
+
+
+// Serve the timestamp microservice page
+app.get("/timestamp", (req, res) => {
+  res.sendFile(__dirname + '/views/timestamp.html');
+});
 // API endpoint to handle timestamp requests
 app.get("/api/:date?", (req, res) => {
   let dateParam = req.params.date;
@@ -78,3 +98,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
