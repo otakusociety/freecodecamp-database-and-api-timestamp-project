@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const mongoose = require("mongoose")
+const MongoDB =require("mongodb")
 
 dotenv.config();
 
@@ -8,6 +10,27 @@ const app = express();
 
 app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
 app.use(express.static("public"));
+
+const uri = process.env.MONGO_URI;
+
+const clientOptions = {
+  serverApi: { version: "1", strict: true, deprecationErrors: true },
+};
+
+async function run() {
+  try {
+    // Create a Mongoose client with a MongoClientOptions object to set the Stable API version
+    await mongoose.connect(uri, clientOptions);
+    await mongoose.connection.db.admin().command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await mongoose.disconnect();
+  }
+}
+run().catch(console.dir);
 
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
