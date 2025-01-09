@@ -29,15 +29,13 @@ async function run() {
     // Create a Mongoose client with a MongoClientOptions object to set the Stable API version
     await mongoose.connect(uri, clientOptions);
     await mongoose.connection.db.admin().command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await mongoose.disconnect();
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("Failed to connect to MongoDB", error);
   }
 }
 run().catch(console.dir);
+
 
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
@@ -76,17 +74,35 @@ app.get("/urlshortener", (req, res) => {
 });
 
 
-// API endpoint for shorturl
-app.post("/api/shorturl", (req, res) => {
-  console.log(shortid.generate(), "< = shortid.generate()");
-  let client_requested_url = req.body.url;
-  let suffix = Math.floor(Math.random() * 1000);
-  console.log("Shortening URL");
-  console.log(req.body.url, "< = req.body.url");
-  res.json({ "Short URL": "Get short URL", " Original url ": req.body.url  }); 
-  console.log({"Success": "post request processed", "Short Url": "Get short URL", 
-    "Original URL": req.body.url});
+// Build a schema and model to store the original URL and the shortened URL
+const shortUrlSchema = new mongoose.Schema({
+  original_url: String,
+  short_url: String,
+  suffix: String
 });
+
+const ShortUrl = mongoose.model("ShortUrl", shortUrlSchema);
+
+// API endpoint for shorturl
+app.post("/api/shorturl", async (req, res) => {
+  let suffix = shortid.generate();
+  console.log(suffix, "< = shortid.generate()");
+  let client_requested_url = req.body.url;
+  console.log(client_requested_url, "< = req.body.url");
+
+  let newShortUrl = new ShortUrl({ original_url: client_requested_url, short_url: suffix, suffix: suffix });
+  
+  try {
+    await newShortUrl.save();
+    console.log("Shortening URL");
+    res.json({ "Short URL": suffix, "Original url": client_requested_url });
+    console.log({"Success": "post request processed", "Short Url": suffix, "Original URL": client_requested_url});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to save the URL" });
+  }
+});
+
 
 
 // Serve the exercise tracker microservice page
