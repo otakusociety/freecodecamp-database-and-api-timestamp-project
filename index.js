@@ -95,7 +95,7 @@ app.post("/api/shorturl", async (req, res) => {
   try {
     await newShortUrl.save();
     console.log("Shortening URL");
-    res.json({ "Short URL": suffix, "Original url": client_requested_url });
+    res.json({ "Original_url": client_requested_url, "Short_url": suffix });
     console.log({"Success": "post request processed", "Short Url": suffix, "Original URL": client_requested_url});
   } catch (error) {
     console.error(error);
