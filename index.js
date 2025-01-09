@@ -6,49 +6,18 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ optionsSuccessStatus: 200 }));  // some legacy browsers choke on 204
+app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
 app.use(express.static("public"));
 
+// Root route to serve the index.html file
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + '/views/index.html');
+  res.sendFile(__dirname + "/views/index.html");
 });
 
-app.get("/api/timestamp/:date_string?", (req, res) => {
-  let dateString = req.params.date_string;
-  console.log(`Received date string: ${dateString}`);
-
-  let date;
-
-  if (!dateString) {
-    // If no date string is provided, use the current date
-    date = new Date();
-  } else {
-    // Check if the dateString is a valid Unix timestamp (all digits)
-    if (/^\d+$/.test(dateString)) {
-      // If it's a valid Unix timestamp, parse it as such
-      date = new Date(parseInt(dateString));
-    } else {
-      // Otherwise, treat it as a human-readable date string
-      date = new Date(dateString);
-    }
-  }
-
-  console.log(`Parsed date: ${date}`);
-
-  // If the date is invalid, send an error response
-  if (date.toString() === "Invalid Date") {
-    res.json({ error: "Invalid Date" });
-  } else {
-    // Return the Unix timestamp and UTC string
-    res.json({ unix: date.getTime(), utc: date.toUTCString() });
-  }
-});
-
-
-// your first API endpoint... 
+// API endpoint for hello
 app.get("/api/hello", function (req, res) {
   console.log({ greeting: "hello API" });
-  res.json({ greeting: 'hello API' });
+  res.json({ greeting: "hello API" });
 });
 
 // API endpoint for whoami
@@ -65,7 +34,42 @@ app.get("/api/whoami", (req, res) => {
   });
 });
 
+// API endpoint to handle timestamp requests
+app.get("/api/:date?", (req, res) => {
+  let dateParam = req.params.date;
+  console.log(`Received date parameter: ${dateParam}`);
+
+  let date;
+
+  if (!dateParam) {
+    date = new Date();
+    console.log("No date parameter provided, using current date.");
+  } else if (/^\d{5,}$/.test(dateParam)) {
+    date = new Date(parseInt(dateParam));
+    console.log(`Interpreted as Unix timestamp: ${date}`);
+  } else {
+    date = new Date(dateParam);
+    console.log(`Interpreted as date string: ${date}`);
+  }
+
+  if (date.toUTCString() === "Invalid Date") {
+    console.log("Invalid date encountered.");
+    res.json({ error: "Invalid Date" });
+  } else {
+    console.log(
+      `Returning date response: Unix=${date.getTime()}, UTC=${date.toUTCString()}`
+    );
+    res.json({ unix: date.getTime(), utc: date.toUTCString() });
+  }
+});
+
+// Catch-all route for unmatched paths
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found" });
+});
+
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
