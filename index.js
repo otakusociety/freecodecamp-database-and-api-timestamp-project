@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose")
 const MongoDB =require("mongodb")
 var bodyParser = require('body-parser');
+var shortid = require('shortid');
 
 dotenv.config();
 
@@ -77,12 +78,15 @@ app.get("/urlshortener", (req, res) => {
 
 // API endpoint for shorturl
 app.post("/api/shorturl", (req, res) => {
+  console.log(shortid.generate(), "< = shortid.generate()");
+  let client_requested_url = req.body.url;
+  let suffix = Math.floor(Math.random() * 1000);
   console.log("Shortening URL");
-  console.log(req.body, "< = req.body");
-  res.json({ "success": "post request processed" });
-  console.log("post request processed");
+  console.log(req.body.url, "< = req.body.url");
+  res.json({ "Short URL": "Get short URL", " Original url ": req.body.url  }); 
+  console.log({"Success": "post request processed", "Short Url": "Get short URL", 
+    "Original URL": req.body.url});
 });
-
 
 
 // Serve the exercise tracker microservice page
