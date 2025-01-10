@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-const shortid = require("shortid");
+const mongoose = require("mongoose")
+const MongoDB =require("mongodb")
+var bodyParser = require('body-parser');
+var shortid = require('shortid');
 
 dotenv.config();
 
@@ -34,10 +36,12 @@ async function run() {
 }
 run().catch(console.dir);
 
+
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/home.html");
 });
+
 
 // API endpoint for hello
 app.get("/api/hello", function (req, res) {
@@ -45,11 +49,11 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
+
 // Serve the header parser microservice page
 app.get("/reverse", (req, res) => {
   res.sendFile(__dirname + '/views/headerparser.html');
 });
-
 // API endpoint for whoami
 app.get("/api/whoami", (req, res) => {
   console.log({
@@ -64,10 +68,11 @@ app.get("/api/whoami", (req, res) => {
   });
 });
 
-// Serve the URL shortener microservice page
+// Serve the url shortener microservice page
 app.get("/urlshortener", (req, res) => {
   res.sendFile(__dirname + '/views/urlshortener.html');
 });
+
 
 // Build a schema and model to store the original URL and the shortened URL
 const shortUrlSchema = new mongoose.Schema({
@@ -88,10 +93,20 @@ const isValidUrl = (url) => {
   }
 };
 
+// Normalize URL function
+const normalizeUrl = (url) => {
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'http://' + url;
+  }
+  return url;
+};
+
 // API endpoint for shorturl
 app.post("/api/shorturl", async (req, res) => {
   let client_requested_url = req.body.url;
   console.log(`Received URL: ${client_requested_url}`);
+
+  client_requested_url = normalizeUrl(client_requested_url);
 
   if (!isValidUrl(client_requested_url)) {
     console.log("Invalid URL");
@@ -103,41 +118,49 @@ app.post("/api/shorturl", async (req, res) => {
 
   try {
     await newShortUrl.save();
-    res.json({ Original_url: client_requested_url, Short_url: suffix });
+    const shortUrl = `${req.protocol}://${req.get('host')}/api/shorturl/${suffix}`;
+    res.json({ Original_url: client_requested_url, Short_url: shortUrl });
   } catch (error) {
     console.error("Failed to save the URL", error);
     res.status(500).json({ error: "Failed to save the URL" });
   }
 });
 
-// Serve the exercise tracker microservice page
-app.get("/exercisetracker", (req, res) => {
+// API endpoint to redirect to the original URL
+app.get("/api/shorturl/:short_url", async (req, res) => {
+  let short_url = req.params.short_url;
+  console.log(`Received short URL: ${short_url}`);
+
+  try {
+    let urlEntry = await ShortUrl.findOne({ short_url });
+    if (urlEntry) {
+      res.redirect(urlEntry.original_url);
+    } else {
+      res.status(404).json({ error: "No short URL found for the given input" });
+    }
+  } catch (error) {
+    console.error("Error finding the short URL", error);
+    res.status(500).json({ error: "Failed to find the URL" });
+  }
+});
+
+// API endpoint to get all short URLs
+
+
+
+
+/*// Serve the exercise tracker microservice page
+app.get("/exercise", (req, res) => {
   res.sendFile(__dirname + '/views/exercisetracker.html');
-});
+});*/
 
-// API endpoint for exercise tracker
-app.post("/api/exercise/new-user", (req, res) => {
-  console.log("Creating new user");
-  console.log(req.body, "< = req.body");
-  res.json({ success: "post request processed" });
-});
 
-app.post("/api/exercise/add", (req, res) => {
-  console.log("Adding exercise");
-  console.log(req.body, "< = req.body");
-  res.json({ success: "post request processed" });
-});
 
-app.get("/api/exercise/log", (req, res) => {
-  console.log(req.query, "< = req.query");
-  res.json({ success: "get request processed" });
-});
 
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
   res.sendFile(__dirname + '/views/timestamp.html');
 });
-
 // API endpoint to handle timestamp requests
 app.get("/api/:date?", (req, res) => {
   let dateParam = req.params.date;
@@ -177,4 +200,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
