@@ -74,77 +74,54 @@ app.get("/urlshortener", (req, res) => {
 });
 
 
-// Build a schema and model to store the original URL and the shortened URL
-const shortUrlSchema = new mongoose.Schema({
+// Build a schema and model to store the URL data
+const urlSchema = new mongoose.Schema({
   original_url: String,
   short_url: String,
-  suffix: String
 });
 
-const ShortUrl = mongoose.model("ShortUrl", shortUrlSchema);
 
-// Improved URL validation function
-const isValidUrl = (url) => {
-  try {
-    new URL(url);
-    return true;
-  } catch (err) {
-    return false;
-  }
-};
-
-// Normalize URL function
-const normalizeUrl = (url) => {
-  if (!/^https?:\/\//i.test(url)) {
-    url = 'http://' + url;
-  }
-  return url;
-};
-
-// API endpoint for shorturl
+// API endpoint for url shortener
 app.post("/api/shorturl", async (req, res) => {
-  let client_requested_url = req.body.url;
-  console.log(`Received URL: ${client_requested_url}`);
+  const originalUrl = req.body.url;
+  console.log(`Received URL to shorten: ${originalUrl}`);
 
-  client_requested_url = normalizeUrl(client_requested_url);
-
-  if (!isValidUrl(client_requested_url)) {
-    console.log("Invalid URL");
-    return res.status(400).json({ error: "Invalid URL" });
-  }
-
-  let suffix = shortid.generate();
-  let newShortUrl = new ShortUrl({ original_url: client_requested_url, short_url: suffix, suffix });
-
+  // Check if the URL is valid
   try {
-    await newShortUrl.save();
-    const shortUrl = `${req.protocol}://${req.get('host')}/api/shorturl/${suffix}`;
-    res.json({ Original_url: client_requested_url, Short_url: shortUrl });
+    new URL(originalUrl);
   } catch (error) {
-    console.error("Failed to save the URL", error);
-    res.status(500).json({ error: "Failed to save the URL" });
+    console.log("Invalid URL encountered.");
+    res.json({ error: "invalid url" });
+    return;
   }
+
+  // Check if the URL is already in the database
+  const Url = mongoose.model("Url", urlSchema);
+  const url = await Url.findOne({ original_url: originalUrl });
+  if (url) {
+    console.log("URL already in database.");
+    res.json({
+      original_url: url.original_url,
+      short_url: url.short_url,
+    });
+    return;
+  }
+
+  // Create a new URL document
+  const shortUrl = shortid.generate();
+  const newUrl = new Url({
+    original_url: originalUrl,
+    short_url: shortUrl,
+  });
+  await newUrl.save();
+
+  console.log("URL saved to database.");
+  res.json({
+    original_url: newUrl.original_url,
+    short_url: newUrl.short_url,
+  });
 });
 
-// API endpoint to redirect to the original URL
-app.get("/api/shorturl/:short_url", async (req, res) => {
-  let short_url = req.params.short_url;
-  console.log(`Received short URL: ${short_url}`);
-
-  try {
-    let urlEntry = await ShortUrl.findOne({ short_url });
-    if (urlEntry) {
-      res.redirect(urlEntry.original_url);
-    } else {
-      res.status(404).json({ error: "No short URL found for the given input" });
-    }
-  } catch (error) {
-    console.error("Error finding the short URL", error);
-    res.status(500).json({ error: "Failed to find the URL" });
-  }
-});
-
-// API endpoint to get all short URLs
 
 
 
