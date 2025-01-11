@@ -80,36 +80,10 @@ app.get("/urlshortener", (req, res) => {
 
 
 
-const urls = [];
-
-app.post('/api/shorturl', (req, res) => {
-  let url = req.body.url.replace(/\/*$/, '');
-  let validUrl = url.replace(/^https:\/\/(www.)?/, '');
-  dns.lookup(validUrl, (err, address, family) => {
-    if (err) {
-      res.json({ error: 'invalid url' })
-    }
-    else {
-      if (!urls.includes(url)) {
-        urls.push(url);
-      }
-      res.json({
-        original_url: url,
-        short_url: urls.indexOf(url) + 1
-      });
-    }
-  });
-});
-
-app.get('/api/shorturl/:id', (req, res) => {
-  const externarlUrl = urls[req.params.id - 1];
-  res.redirect(externarlUrl);
-});
 
 
 
 
-/*
 // Build a schema and model to store the URL data
 const ShortURL = new mongoose.model('ShortURL', new mongoose.Schema({
   original_url: String,
@@ -154,9 +128,9 @@ app.post("/api/shorturl", async (req, res) => {
     res.status(500).json({ error: "Failed to save URL" });
   }
 });
-*/
 
-  /*newURL.save((err, data) => {
+/*
+  newURL.save((err, data) => {
     if (err) {
       console.error(`Error saving URL: ${err}`);
     } else {
@@ -169,10 +143,10 @@ app.post("/api/shorturl", async (req, res) => {
       });
     }
   });
-  
-});
+  */
+//});
 
-*/
+
 
 
 
