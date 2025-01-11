@@ -120,7 +120,7 @@ app.post("/api/shorturl", async (req, res) => {
     res.json({
       saved: true,
       original_url: newURL.original_url,
-      short_url: newURL.short_url,
+      short_url: newURL.suffix,
       
     });
   } catch (err) {
