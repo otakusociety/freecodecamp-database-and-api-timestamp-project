@@ -82,7 +82,8 @@ app.post("/api/shorturl", async (req, res) => {
   const suffix = shortid.generate();
   const shortUrl = new ShortUrl({
     original_url: originalUrl,
-    short_url: suffix
+    short_url: suffix,
+    suffix: suffix
   });
 
   try {
