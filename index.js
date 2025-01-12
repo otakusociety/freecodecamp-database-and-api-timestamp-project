@@ -107,8 +107,7 @@ app.post("/api/shorturl", (req, res) => {
 
   let shortUrl = new ShortUrl({
     original_url: originalUrl,
-    short_url: `${process.env.APP_URL}/api/shorturl/${suffix}`,
-    suffix: suffix,
+    short_url: suffix,
   });
 
   // Save the short URL to the database
