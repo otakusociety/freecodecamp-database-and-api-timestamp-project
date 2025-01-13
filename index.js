@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose")
-const MongoDB =require("mongodb")
-var bodyParser = require('body-parser');
-var shortid = require('shortid');
+const mongoose = require("mongoose");
+const MongoDB = require("mongodb");
+var bodyParser = require("body-parser");
+var shortid = require("shortid");
 
 dotenv.config();
 
@@ -36,12 +36,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 // Root route to serve the index.html file
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/home.html");
 });
-
 
 // API endpoint for hello
 app.get("/api/hello", function (req, res) {
@@ -49,10 +47,9 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-
 // Serve the header parser microservice page
 app.get("/reverse", (req, res) => {
-  res.sendFile(__dirname + '/views/headerparser.html');
+  res.sendFile(__dirname + "/views/headerparser.html");
 });
 // API endpoint for whoami
 app.get("/api/whoami", (req, res) => {
@@ -70,39 +67,34 @@ app.get("/api/whoami", (req, res) => {
 
 // Serve the url shortener microservice page
 app.get("/urlshortener", (req, res) => {
-  res.sendFile(__dirname + '/views/urlshortener.html');
+  res.sendFile(__dirname + "/views/urlshortener.html");
 });
 
+// Build the schema model to store the short URL
+var ShortUrl = mongoose.model(
+  "ShortUrl",
+  new mongoose.Schema({
+    original_url: String,
+    short_url: String,
+    suffix: String,
+  })
+);
 
-//Build the schema model to store the short URL
-var ShortUrl= mongoose.model('ShortUrl', new mongoose.Schema({
-  original_url: String,
-  short_url: String,
-  suffix: String
-}));
-
-//parse application/x-www-form-urlencoded
-
+// parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
-//parse application/json
+// parse application/json
 app.use(bodyParser.json());
-
-
 
 // API endpoint to handle URL shortener requests
 app.post("/api/shorturl", (req, res) => {
   let originalUrl = req.body.url;
   console.log(`Received URL: ${originalUrl}`);
 
- 
-
-  let url;
-  try {
-    url = new URL(originalUrl);
-  } catch (error) {
+  // Validate the URL format
+  const urlRegex = /^(https?:\/\/)(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}.*$/;
+  if (!urlRegex.test(originalUrl)) {
     console.log("Invalid URL encountered.");
-    res.json({ error: "invalid url" });
-    return;
+    return res.json({ error: "invalid url" });
   }
 
   let suffix = shortid.generate();
@@ -111,7 +103,7 @@ app.post("/api/shorturl", (req, res) => {
   let shortUrl = new ShortUrl({
     original_url: originalUrl,
     short_url: suffix,
-    suffix: suffix
+    suffix: suffix,
   });
 
   // Save the short URL to the database
@@ -149,12 +141,9 @@ app.get("/api/shorturl/:suffix", async (req, res) => {
   }
 });
 
-
-
-
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
-  res.sendFile(__dirname + '/views/timestamp.html');
+  res.sendFile(__dirname + "/views/timestamp.html");
 });
 // API endpoint to handle timestamp requests
 app.get("/api/:date?", (req, res) => {
@@ -195,5 +184,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-
