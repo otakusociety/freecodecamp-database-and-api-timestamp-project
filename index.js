@@ -3,7 +3,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 var bodyParser = require("body-parser");
-var shortid = require("shortid");
 
 dotenv.config();
 
@@ -39,33 +38,14 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.get("/reverse", (req, res) => {
-  res.sendFile(__dirname + "/views/headerparser.html");
+const ShortUrlSchema = new mongoose.Schema({
+  original_url: String,
+  short_url: Number,
 });
 
-app.get("/api/whoami", (req, res) => {
-  res.json({
-    ipaddress: req.ip,
-    language: req.headers["accept-language"],
-    software: req.headers["user-agent"],
-  });
-});
+const ShortUrl = mongoose.model("ShortUrl", ShortUrlSchema);
 
-app.get("/urlshortener", (req, res) => {
-  res.sendFile(__dirname + "/views/urlshortener.html");
-});
-
-const ShortUrl = mongoose.model(
-  "ShortUrl",
-  new mongoose.Schema({
-    original_url: String,
-    short_url: String,
-    suffix: String,
-  })
-);
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+let urlCounter = 1; // Initialize a global counter for short_url
 
 function isValidUrl(url) {
   const regex = /^(https?:\/\/)(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}.*$/;
@@ -79,14 +59,22 @@ app.post("/api/shorturl", async (req, res) => {
     return res.json({ error: "invalid url" });
   }
 
-  const suffix = shortid.generate();
-  const shortUrl = new ShortUrl({
-    original_url: originalUrl,
-    short_url: suffix,
-    suffix: suffix
-  });
-
   try {
+    // Check if the URL already exists in the database
+    const existingUrl = await ShortUrl.findOne({ original_url: originalUrl });
+    if (existingUrl) {
+      return res.json({
+        original_url: existingUrl.original_url,
+        short_url: existingUrl.short_url,
+      });
+    }
+
+    // Create a new short URL
+    const shortUrl = new ShortUrl({
+      original_url: originalUrl,
+      short_url: urlCounter++,
+    });
+
     const data = await shortUrl.save();
     res.json({
       original_url: data.original_url,
@@ -98,11 +86,11 @@ app.post("/api/shorturl", async (req, res) => {
   }
 });
 
-app.get("/api/shorturl/:suffix", async (req, res) => {
-  const { suffix } = req.params;
+app.get("/api/shorturl/:short_url", async (req, res) => {
+  const shortUrl = parseInt(req.params.short_url);
 
   try {
-    const data = await ShortUrl.findOne({ suffix });
+    const data = await ShortUrl.findOne({ short_url: shortUrl });
     if (!data) {
       return res.status(404).json({ error: "not found" });
     }
@@ -110,29 +98,6 @@ app.get("/api/shorturl/:suffix", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "database error" });
-  }
-});
-
-app.get("/timestamp", (req, res) => {
-  res.sendFile(__dirname + "/views/timestamp.html");
-});
-
-app.get("/api/:date?", (req, res) => {
-  let dateParam = req.params.date;
-  let date;
-
-  if (!dateParam) {
-    date = new Date();
-  } else if (/^\d{5,}$/.test(dateParam)) {
-    date = new Date(parseInt(dateParam));
-  } else {
-    date = new Date(dateParam);
-  }
-
-  if (date.toUTCString() === "Invalid Date") {
-    res.json({ error: "Invalid Date" });
-  } else {
-    res.json({ unix: date.getTime(), utc: date.toUTCString() });
   }
 });
 
