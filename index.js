@@ -96,14 +96,16 @@ app.post("/api/shorturl", (req, res) => {
 
  
 
-  let url;
-  try {
-    url = new URL(originalUrl);
-  } catch (error) {
-    console.log("Invalid URL encountered.");
-    res.json({ error: "invalid url" });
-    return;
-  }
+ let url;
+try {
+  // Ensure originalUrl is defined and contains a valid URL string
+  url = new URL(originalUrl);
+} catch (error) {
+  console.log("Invalid URL encountered.");
+  // Ensure res is defined and is an instance of the response object
+  res.json({ error: "invalid url" });
+  return;
+}
 
   let suffix = shortid.generate();
   console.log(`Generated suffix: ${suffix}`);
