@@ -87,11 +87,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 //parse application/json
 app.use(bodyParser.json());
 
+// Validate URL
+function isValidUrl(url) {
+  const regex = /^(https?:\/\/)(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}.*$/;
+  return regex.test(url);
+}
 
 // API endpoint to handle URL shortener requests
 app.post("/api/shorturl", (req, res) => {
   let originalUrl = req.body.url;
   console.log(`Received URL: ${originalUrl}`);
+
+  if (!isValidUrl(originalUrl)) {
+    return res.json({ error: "invalid url" });
+  }
 
   let url;
   try {
