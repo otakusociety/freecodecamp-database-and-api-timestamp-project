@@ -95,11 +95,7 @@ app.post("/api/shorturl", (req, res) => {
   console.log(`Received URL: ${originalUrl}`);
 
   // Check if originalUrl is defined and is a string
-  if (!originalUrl || typeof originalUrl !== 'string') {
-    console.log("Invalid URL encountered.");
-    res.json({ error: "invalid url" });
-    return;
-  }
+ 
 
   // Regular expression to validate URL format
   const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/[a-zA-Z0-9-]*)*\/?$/;
