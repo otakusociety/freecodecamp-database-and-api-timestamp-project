@@ -90,21 +90,13 @@ app.use(bodyParser.json());
 
 
 // API endpoint to handle URL shortener requests
-app.post("/api/shorturl", async (req, res) => {
+app.post("/api/shorturl", (req, res) => {
   let originalUrl = req.body.url;
   console.log(`Received URL: ${originalUrl}`);
 
   // Check if originalUrl is defined and is a string
   if (!originalUrl || typeof originalUrl !== 'string') {
     console.log("Invalid URL encountered.");
-    res.json({ error: "invalid url" });
-    return;
-  }
-
-  // Regular expression to validate URL format
-  const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/[a-zA-Z0-9-]*)*\/?$/;
-  if (!urlPattern.test(originalUrl)) {
-    console.log("Invalid URL format encountered.");
     res.json({ error: "invalid url" });
     return;
   }
@@ -128,17 +120,20 @@ app.post("/api/shorturl", async (req, res) => {
     suffix: suffix
   });
 
-  try {
-    const data = await shortUrl.save();
-    console.log(`Saved short URL: ${data}`);
-    res.json({
-      original_url: data.original_url,
-      short_url: data.short_url,
-    });
-  } catch (err) {
-    console.error(err);
-    res.json({ error: "database error" });
-  }
+  // Save the short URL to the database
+  (async () => {
+    try {
+      const data = await shortUrl.save();
+      console.log(`Saved short URL: ${data}`);
+      res.json({
+        original_url: data.original_url,
+        short_url: data.short_url,
+      });
+    } catch (err) {
+      console.error(err);
+      res.json({ error: "database error" });
+    }
+  })();
 });
 
 // API endpoint to redirect to the original URL
