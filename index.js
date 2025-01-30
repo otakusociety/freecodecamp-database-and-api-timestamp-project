@@ -5,6 +5,8 @@ const mongoose = require("mongoose")
 const MongoDB =require("mongodb")
 var bodyParser = require('body-parser');
 var shortid = require('shortid');
+const dns = require('dns');
+const url = require('url');
 
 dotenv.config();
 
@@ -101,41 +103,48 @@ app.post("/api/shorturl", (req, res) => {
     return;
   }
 
-  
-
-  let url;
+  // Parse the URL to get the hostname
+  let parsedUrl;
   try {
-    // Ensure originalUrl contains a valid URL string
-    url = new URL(originalUrl);
+    parsedUrl = new URL(originalUrl);
   } catch (error) {
     console.log("Invalid URL encountered.");
     res.json({ error: "invalid url" });
     return;
   }
 
-  let suffix = shortid.generate();
-  console.log(`Generated suffix: ${suffix}`);
-
-  let shortUrl = new ShortUrl({
-    original_url: originalUrl,
-    short_url: suffix,
-    suffix: suffix
-  });
-
-  // Save the short URL to the database
-  (async () => {
-    try {
-      const data = await shortUrl.save();
-      console.log(`Saved short URL: ${data}`);
-      res.json({
-        original_url: data.original_url,
-        short_url: data.short_url,
-      });
-    } catch (err) {
-      console.error(err);
-      res.json({ error: "database error" });
+  // Use dns.lookup to verify the hostname
+  dns.lookup(parsedUrl.hostname, (err) => {
+    if (err) {
+      console.log("Invalid URL encountered.");
+      res.json({ error: "invalid url" });
+      return;
     }
-  })();
+
+    let suffix = shortid.generate();
+    console.log(`Generated suffix: ${suffix}`);
+
+    let shortUrl = new ShortUrl({
+      original_url: originalUrl,
+      short_url: suffix,
+      suffix: suffix
+    });
+
+    // Save the short URL to the database
+    (async () => {
+      try {
+        const data = await shortUrl.save();
+        console.log(`Saved short URL: ${data}`);
+        res.json({
+          original_url: data.original_url,
+          short_url: data.short_url,
+        });
+      } catch (err) {
+        console.error(err);
+        res.json({ error: "database error" });
+      }
+    })();
+  });
 });
 
 // API endpoint to redirect to the original URL
