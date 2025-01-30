@@ -101,6 +101,14 @@ app.post("/api/shorturl", (req, res) => {
     return;
   }
 
+  // Regular expression to validate URL format
+  const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/[a-zA-Z0-9-]*)*\/?$/;
+  if (!urlPattern.test(originalUrl)) {
+    console.log("Invalid URL format encountered.");
+    res.json({ error: "invalid url" });
+    return;
+  }
+
   let url;
   try {
     // Ensure originalUrl contains a valid URL string
