@@ -101,13 +101,7 @@ app.post("/api/shorturl", (req, res) => {
     return;
   }
 
-  // Regular expression to validate URL format
-  const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/[a-zA-Z0-9-]*)*\/?$/;
-  if (!urlPattern.test(originalUrl)) {
-    console.log("Invalid URL format encountered.");
-    res.json({ error: "invalid url" });
-    return;
-  }
+  
 
   let url;
   try {
@@ -142,7 +136,19 @@ app.post("/api/shorturl", (req, res) => {
       res.json({ error: "database error" });
     }
   })();
+
+  // Regular expression to validate URL format
+  const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/[a-zA-Z0-9-]*)*\/?$/;
+  if (!urlPattern.test(originalUrl)) {
+    console.log("Invalid URL format encountered.");
+    res.json({ error: "invalid url" });
+    return;
+  }
+
+
 });
+
+
 
 // API endpoint to redirect to the original URL
 app.get("/api/shorturl/:suffix", async (req, res) => {
