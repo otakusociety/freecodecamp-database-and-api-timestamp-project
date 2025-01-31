@@ -167,8 +167,337 @@ app.get("/api/shorturl/:suffix", async (req, res) => {
 });
 
 
+// Serve the exercise tracker microservice page
+app.get("/exercisetracker", (req, res) => {
+  res.sendFile(__dirname + '/views/exercisetracker.html');
+});
 
+//Build the schema model to store the exercise data
+var User = mongoose.model('User', new mongoose.Schema({
+  username: String,
+  log: [{
+    description: String,
+    duration: Number,
+    date: Date
+  }]
+}));
 
+// API endpoint to create a new user
+app.post("/api/exercise/new-user", (req, res) => {
+  let username = req.body.username;
+  console.log(`Received username: ${username}`);
+
+  let user = new User({
+    username: username,
+    log: []
+  });
+
+  // Save the user to the database
+  (async () => {
+    try {
+      const data = await user.save();
+      console.log(`Saved user: ${data}`);
+      res.json({ username: data.username, _id: data._id });
+    } catch (err) {
+      console.error(err);
+      res.json({ error: "database error" });
+    }
+  })();
+});
+
+// API endpoint to get all users
+app.get("/api/exercise/users", async (req, res) => {
+  try {
+    const data = await User.find({}, "_id username");
+    console.log(`Found users: ${data}`);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to add an exercise
+app.post("/api/exercise/add", async (req, res) => {
+  let userId = req.body.userId;
+  let description = req.body.description;
+  let duration = req.body.duration;
+  let date = req.body.date;
+
+  console.log(`Received userId: ${userId}`);
+  console.log(`Received description: ${description}`);
+  console.log(`Received duration: ${duration}`);
+  console.log(`Received date: ${date}`);
+
+  if (!date) {
+    date = new Date();
+  } else {
+    date = new Date(date);
+  }
+
+  if (date.toUTCString() === "Invalid Date") {
+    console.log("Invalid date encountered.");
+    res.json({ error: "Invalid Date" });
+    return;
+  }
+
+  let exercise = {
+    description: description,
+    duration: parseInt(duration),
+    date: date
+  };
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $push: { log: exercise } },
+      { new: true }
+    );
+    console.log(`Added exercise to user: ${user}`);
+    res.json({
+      _id: user._id,
+      username: user.username,
+      date: date.toDateString(),
+      duration: parseInt(duration),
+      description: description
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to get a user's exercise log
+app.get("/api/exercise/log", async (req, res) => {
+  let userId = req.query.userId;
+  let from = req.query.from;
+  let to = req.query.to;
+  let limit = req.query.limit;
+
+  console.log(`Received userId: ${userId}`);
+  console.log(`Received from: ${from}`);
+  console.log(`Received to: ${to}`);
+  console.log(`Received limit: ${limit}`);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ error: "User not found" });
+      return;
+    }
+
+    let log = user.log;
+
+    if (from) {
+      log = log.filter((exercise) => exercise.date >= new Date(from));
+    }
+
+    if (to) {
+      log = log.filter((exercise) => exercise.date <= new Date(to));
+    }
+
+    if (limit) {
+      log = log.slice(0, limit);
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      count: log.length,
+      log: log.map((exercise) => ({
+        description: exercise.description,
+        duration: exercise.duration,
+        date: exercise.date.toDateString()
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to delete a user
+app.delete("/api/exercise/delete-user/:userId", async (req, res) => {
+  let userId = req.params.userId;
+  console.log(`Received userId: ${userId}`);
+
+  try {
+    const data = await User.findByIdAndDelete(userId);
+    if (!data) {
+      res.json({ error: "User not found" });
+    } else {
+      console.log(`Deleted user: ${data}`);
+      res.json({ message: "Deleted user" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to delete all users
+app.delete("/api/exercise/delete-users", async (req, res) => {
+  try {
+    const data = await User.deleteMany({});
+    console.log(`Deleted users: ${data}`);
+    res.json({ message: "Deleted users" });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to delete all exercises
+app.delete("/api/exercise/delete-exercises", async (req, res) => {
+  try {
+    const data = await User.updateMany({}, { $set: { log: [] } });
+    console.log(`Deleted exercises: ${data}`);
+    res.json({ message: "Deleted exercises" });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to delete all exercises for a user
+app.delete("/api/exercise/delete-exercises/:userId", async (req, res) => {
+  let userId = req.params.userId;
+  console.log(`Received userId: ${userId}`);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ error: "User not found" });
+      return;
+    }
+
+    user.log = [];
+    const data = await user.save();
+    console.log(`Deleted exercises for user: ${data}`);
+    res.json({ message: "Deleted exercises for user" });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to delete an exercise for a user
+app.delete("/api/exercise/delete-exercise/:userId/:exerciseId", async (req, res) => {
+  let userId = req.params.userId;
+  let exerciseId = req.params.exerciseId;
+  console.log(`Received userId: ${userId}`);
+  console.log(`Received exerciseId: ${exerciseId}`);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ error: "User not found" });
+      return;
+    }
+
+    user.log = user.log.filter((exercise) => exercise._id != exerciseId);
+    const data = await user.save();
+    console.log(`Deleted exercise for user: ${data}`);
+    res.json({ message: "Deleted exercise for user" });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to update an exercise for a user
+app.put("/api/exercise/update-exercise/:userId/:exerciseId", async (req, res) => {
+  let userId = req.params.userId;
+  let exerciseId = req.params.exerciseId;
+  let description = req.body.description;
+  let duration = req.body.duration;
+  let date = req.body.date;
+
+  console.log(`Received userId: ${userId}`);
+  console.log(`Received exerciseId: ${exerciseId}`);
+  console.log(`Received description: ${description}`);
+  console.log(`Received duration: ${duration}`);
+  console.log(`Received date: ${date}`);
+
+  if (!date) {
+    date = new Date();
+  } else {
+    date = new Date(date);
+  }
+
+  if (date.toUTCString() === "Invalid Date") {
+    console.log("Invalid date encountered.");
+    res.json({ error: "Invalid Date" });
+    return;
+  }
+
+  let exercise = {
+    description: description,
+    duration: parseInt(duration),
+    date: date
+  };
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ error: "User not found" });
+      return;
+    }
+
+    user.log = user.log.map((item) => {
+      if (item._id == exerciseId) {
+        return exercise;
+      } else {
+        return item;
+      }
+    });
+
+    const data = await user.save();
+    console.log(`Updated exercise for user: ${data}`);
+    res.json({ message: "Updated exercise for user" });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to get all exercises
+app.get("/api/exercise/exercises", async (req, res) => {
+  try {
+    const data = await User.find({}, "_id username log");
+    console.log(`Found exercises: ${data}`);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+// API endpoint to get all exercises for a user
+app.get("/api/exercise/exercises/:userId", async (req, res) => {
+  let userId = req.params.userId;
+  console.log(`Received userId: ${userId}`);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ error: "User not found" });
+      return;
+    }
+
+    // Assuming the user's exercises are stored in a 'log' field
+    res.json({
+      _id: user._id,
+      username: user.username,
+      log: user.log
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
+});
+
+  
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
   res.sendFile(__dirname + '/views/timestamp.html');
