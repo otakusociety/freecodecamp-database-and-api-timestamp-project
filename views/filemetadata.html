@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>File Metadata</title>
+    <title>File Metadata Microservice</title>
     <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png"
         type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
@@ -12,7 +12,7 @@
 
 <body>
     <div class="container">
-        <h1>API Project: File Metadata Microservice</h1>
+        <h1>File Metadata Microservice</h1>
 
         <h2>Usage:</h2>
         <p>
@@ -20,9 +20,13 @@
         </p>
         <div class="view">
             <h3 id="output"></h3>
-            <form enctype="multipart/form-data" method="POST" action="/api/fileanalyse">
-                <input id="inputfield" type="file" name="upfile">
-                <input id="button" type="submit" value="Upload">
+            <form ref='uploadForm' 
+                id='uploadForm' 
+                action='/api/fileanalyse' 
+                method='post' 
+                encType="multipart/form-data">
+                <input type="file" name="upfile" />
+                <input type='submit' value='Upload!' />
             </form>
         </div>
     </div>
