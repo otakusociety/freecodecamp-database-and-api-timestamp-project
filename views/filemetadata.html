@@ -14,21 +14,14 @@
     <div class="container">
         <h1>File Metadata Microservice</h1>
 
-        <h2>Usage:</h2>
-        <p>
-            Please Upload a File ...
-        </p>
-        <div class="view">
-            <h3 id="output"></h3>
-            <form ref='uploadForm' 
-                id='uploadForm' 
-                action='/api/fileanalyse' 
-                method='post' 
-                encType="multipart/form-data">
-                <input type="file" name="upfile" />
-                <input type='submit' value='Upload!' />
-            </form>
-        </div>
+        <form ref='uploadForm' 
+            id='uploadForm' 
+            action='/api/fileanalyse' 
+            method='post' 
+            encType="multipart/form-data">
+            <input type="file" name="upfile" />
+            <input type='submit' value='Upload!' />
+        </form>
     </div>
     <div class="footer">
         <p>
