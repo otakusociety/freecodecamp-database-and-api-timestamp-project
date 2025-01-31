@@ -183,30 +183,26 @@ var User = mongoose.model('User', new mongoose.Schema({
 }));
 
 // API endpoint to create a new user
-app.post("/api/exercise/new-user", (req, res) => {
+app.post("/api/users", async (req, res) => {
   let username = req.body.username;
   console.log(`Received username: ${username}`);
-
   let user = new User({
     username: username,
     log: []
   });
 
-  // Save the user to the database
-  (async () => {
-    try {
-      const data = await user.save();
-      console.log(`Saved user: ${data}`);
-      res.json({ username: data.username, _id: data._id });
-    } catch (err) {
-      console.error(err);
-      res.json({ error: "database error" });
-    }
-  })();
+  try {
+    const data = await user.save();
+    console.log(`Saved user: ${data}`);
+    res.json({ username: data.username, _id: data._id });
+  } catch (err) {
+    console.error(err);
+    res.json({ error: "database error" });
+  }
 });
 
 // API endpoint to get all users
-app.get("/api/exercise/users", async (req, res) => {
+app.get("/api/users", async (req, res) => {
   try {
     const data = await User.find({}, "_id username");
     console.log(`Found users: ${data}`);
@@ -218,8 +214,8 @@ app.get("/api/exercise/users", async (req, res) => {
 });
 
 // API endpoint to add an exercise
-app.post("/api/exercise/add", async (req, res) => {
-  let userId = req.body.userId;
+app.post("/api/users/:_id/exercises", async (req, res) => {
+  let userId = req.params._id;
   let description = req.body.description;
   let duration = req.body.duration;
   let date = req.body.date;
@@ -268,8 +264,8 @@ app.post("/api/exercise/add", async (req, res) => {
 });
 
 // API endpoint to get a user's exercise log
-app.get("/api/exercise/log", async (req, res) => {
-  let userId = req.query.userId;
+app.get("/api/users/:_id/logs", async (req, res) => {
+  let userId = req.params._id;
   let from = req.query.from;
   let to = req.query.to;
   let limit = req.query.limit;
