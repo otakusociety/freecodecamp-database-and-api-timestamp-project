@@ -523,41 +523,10 @@ app.post("/api/fileanalyse", upload.single('upfile'), (req, res) => {
   });
 });
 
-
-  
-    
-
-// Serve the timestamp microservice page
-app.get("/timestamp", (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'timestamp.html'));
-});
-// API endpoint to handle timestamp requests
-app.get("/api/:date?", (req, res) => {
-  let dateParam = req.params.date;
-  console.log(`Received date parameter: ${dateParam}`);
-
-  let date;
-
-  if (!dateParam) {
-    date = new Date();
-    console.log("No date parameter provided, using current date.");
-  } else if (/^\d{5,}$/.test(dateParam)) {
-    date = new Date(parseInt(dateParam));
-    console.log(`Interpreted as Unix timestamp: ${date}`);
-  } else {
-    date = new Date(dateParam);
-    console.log(`Interpreted as date string: ${date}`);
-  }
-
-  if (date.toUTCString() === "Invalid Date") {
-    console.log("Invalid date encountered.");
-    res.json({ error: "Invalid Date" });
-  } else {
-    console.log(
-      `Returning date response: Unix=${date.getTime()}, UTC=${date.toUTCString()}`
-    );
-    res.json({ unix: date.getTime(), utc: date.toUTCString() });
-  }
+// Middleware to prefix /file-metadata to the routes
+app.use('/file-metadata', (req, res, next) => {
+  req.url = req.url.replace('/file-metadata', '');
+  next();
 });
 
 // Catch-all route for unmatched paths
