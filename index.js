@@ -51,6 +51,9 @@ app.get("/", (req, res) => {
 });
 
 
+
+
+
 // API endpoint for hello
 app.get("/api/hello", function (req, res) {
   console.log({ greeting: "hello API" });
@@ -74,6 +77,33 @@ app.get("/api/whoami", (req, res) => {
     language: req.headers["accept-language"],
     software: req.headers["user-agent"],
   });
+});
+
+
+// Serve the file metadata microservice page
+app.get("/filemetadata", (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'filemetadata.html'));
+});
+// API endpoint to handle file metadata requests
+app.post("/api/fileanalyse", upload.single('upfile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const file = req.file;
+  console.log(`Received file: ${file.originalname}`);
+
+  res.json({
+    name: file.originalname,
+    type: file.mimetype,
+    size: file.size
+  });
+});
+
+// Middleware to prefix /file-metadata to the routes
+app.use('/file-metadata', (req, res, next) => {
+  req.url = req.url.replace('/file-metadata', '');
+  next();
 });
 
 // Serve the url shortener microservice page
@@ -503,31 +533,7 @@ app.get("/api/exercise/exercises/:userId", async (req, res) => {
 
 
 
-// Serve the file metadata microservice page
-app.get("/filemetadata", (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'filemetadata.html'));
-});
-// API endpoint to handle file metadata requests
-app.post("/api/fileanalyse", upload.single('upfile'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
 
-  const file = req.file;
-  console.log(`Received file: ${file.originalname}`);
-
-  res.json({
-    name: file.originalname,
-    type: file.mimetype,
-    size: file.size
-  });
-});
-
-// Middleware to prefix /file-metadata to the routes
-app.use('/file-metadata', (req, res, next) => {
-  req.url = req.url.replace('/file-metadata', '');
-  next();
-});
 
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
