@@ -92,11 +92,15 @@ app.post("/api/fileanalyse", multer().single('upfile'), (req, res) => {
   const file = req.file;
   console.log(`Received file: ${file.originalname}`);
 
-  res.json({
+ let fileMetadata = {
     name: file.originalname,
     type: file.mimetype,
     size: file.size
-  });
+  };
+
+  console.log(`Returning file metadata: ${fileMetadata}`);
+  res.json(fileMetadata);
+
 });
 
 // Middleware to prefix /file-metadata to the routes
