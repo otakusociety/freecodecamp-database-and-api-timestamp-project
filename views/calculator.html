@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculator</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
+    <link href="style-calculator.css" rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .calculator {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .calculator h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .calculator .display {
+            width: 100%;
+            height: 50px;
+            background-color: #222;
+            color: #fff;
+            text-align: right;
+            padding: 10px;
+            font-size: 24px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .calculator .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .calculator .buttons button {
+            width: 100%;
+            height: 50px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .calculator .buttons button:hover {
+            background-color: #ddd;
+        }
+        .calculator .buttons .operator {
+            background-color: #ff9500;
+            color: #fff;
+        }
+        .calculator .buttons .operator:hover {
+            background-color: #e08900;
+        }
+        .calculator .buttons .equals {
+            background-color: #34c759;
+            color: #fff;
+            grid-column: span 2;
+        }
+        .calculator .buttons .equals:hover {
+            background-color: #2fa748;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>Calculator</h2>
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="setOperation('divide')">÷</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="setOperation('multiply')">×</button>
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="setOperation('subtract')">−</button>
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="clearDisplay()">C</button>
+            <button class="equals" onclick="calculate()">=</button>
+            <button class="operator" onclick="setOperation('add')">+</button>
+        </div>
+    </div>
+    <script>
+        let currentOperation = null;
+        let firstOperand = '';
+        let secondOperand = '';
+        let shouldResetDisplay = false;
+
+        function appendNumber(number) {
+            if (shouldResetDisplay) {
+                document.getElementById('display').innerText = '';
+                shouldResetDisplay = false;
+            }
+            document.getElementById('display').innerText += number;
+        }
+
+        function setOperation(operation) {
+            if (currentOperation !== null) calculate();
+            firstOperand = document.getElementById('display').innerText;
+            currentOperation = operation;
+            shouldResetDisplay = true;
+        }
+
+        function clearDisplay() {
+            document.getElementById('display').innerText = '0';
+            currentOperation = null;
+            firstOperand = '';
+            secondOperand = '';
+        }
+
+        async function calculate() {
+            if (currentOperation === null) return;
+            secondOperand = document.getElementById('display').innerText;
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ operation: currentOperation, num1: firstOperand, num2: secondOperand })
+                });
+                const data = await response.json();
+                if (data.result !== undefined) {
+                    document.getElementById('display').innerText = data.result;
+                } else {
+                    document.getElementById('display').innerText = 'Error';
+                }
+            } catch (error) {
+                console.error('Error calculating:', error);
+                document.getElementById('display').innerText = 'Error';
+            }
+            currentOperation = null;
+            shouldResetDisplay = true;
+        }
+    </script>
+</body>
+</html>
