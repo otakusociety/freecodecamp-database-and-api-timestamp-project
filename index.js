@@ -11,6 +11,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
+const conversions = require('./conversions');
+const axios = require("axios");
 
 dotenv.config();
 
@@ -591,6 +593,91 @@ app.use('/file-metadata', (req, res, next) => {
   req.url = req.url.replace('/file-metadata', '');
   next();
 });
+
+
+// Serve the unit converter page
+app.get("/unitconverter", (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'unitconverter.html'));
+});
+
+// API endpoint to handle unit conversion requests
+app.post("/api/convert", (req, res) => {
+  const { category, conversion, value } = req.body;
+  if (!category || !conversion || value === undefined) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+
+  try {
+    const conversionFunction = conversions[category][conversion];
+    if (!conversionFunction) {
+      return res.status(400).json({ error: "Conversion not supported" });
+    }
+
+    const result = conversionFunction(parseFloat(value));
+    res.json({ result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to convert units" });
+  }
+});
+
+// API endpoint to get conversion options
+app.get("/api/conversion-options", (req, res) => {
+  const options = {};
+  for (const category in conversions) {
+    options[category] = Object.keys(conversions[category]).map(key => ({
+      value: key,
+      text: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+    }));
+  }
+  res.json(options);
+});
+
+
+// Serve the currency converter page
+app.get("/currencyconverter", (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'currencyconverter.html'));
+});
+
+// API endpoint to get currency conversion options
+app.get("/api/currency-options", (req, res) => {
+  const currencies = [
+    { code: "USD", name: "American Dollar" },
+    { code: "GHS", name: "Ghana Cedi" },
+    { code: "GBP", name: "British Pound" },
+    { code: "INR", name: "Indian Rupee" },
+    { code: "ZAR", name: "South African Rand" },
+    { code: "JPY", name: "Japanese Yen" },
+    { code: "EUR", name: "Euro" },
+    // Add more currencies here
+  ];
+  res.json(currencies);
+});
+
+// API endpoint to handle currency conversion requests
+app.post("/api/convert-currency", async (req, res) => {
+  const { from, to, amount } = req.body;
+  if (!from || !to || amount === undefined) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+
+  try {
+    const response = await axios.get(`https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/${from}`);
+    const rate = response.data.conversion_rates[to];
+    if (!rate) {
+      return res.status(400).json({ error: "Conversion not supported" });
+    }
+
+    const result = rate * parseFloat(amount);
+    res.json({ result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to convert currency" });
+  }
+});
+
+
+
 
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {

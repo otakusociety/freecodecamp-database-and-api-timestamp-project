@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unit Converter</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
+    <link href="style-unitconverter.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="container">
+        <h2>Unit Converter</h2>
+        <form id="convertForm">
+            <label for="category">Category:</label>
+            <select id="category" name="category" onchange="updateConversionOptions()">
+                <!-- Options will be populated dynamically -->
+            </select>
+            <label for="conversion">Conversion:</label>
+            <select id="conversion" name="conversion">
+                <!-- Options will be populated dynamically -->
+            </select>
+            <label for="value">Value:</label>
+            <input type="number" id="value" name="value" required />
+            <button type="submit">Convert</button>
+        </form>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">
+        <p>
+            By <a href="http://www.freecodecamp.com/">otakusociety</a>
+        </p>
+    </div>
+    <script>
+        let conversionOptions = {};
+
+        async function fetchConversionOptions() {
+            const response = await fetch('/api/conversion-options');
+            conversionOptions = await response.json();
+            updateCategoryOptions();
+        }
+
+        function updateCategoryOptions() {
+            const categorySelect = document.getElementById('category');
+            categorySelect.innerHTML = '';
+            for (const category in conversionOptions) {
+                const opt = document.createElement('option');
+                opt.value = category;
+                opt.text = category.charAt(0).toUpperCase() + category.slice(1);
+                categorySelect.add(opt);
+            }
+            updateConversionOptions();
+        }
+
+        function updateConversionOptions() {
+            const category = document.getElementById('category').value;
+            const conversionSelect = document.getElementById('conversion');
+            conversionSelect.innerHTML = '';
+            conversionOptions[category].forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.text = option.text;
+                conversionSelect.add(opt);
+            });
+        }
+
+        document.getElementById('convertForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const category = document.getElementById('category').value;
+            const conversion = document.getElementById('conversion').value;
+            const value = document.getElementById('value').value;
+            const response = await fetch('/api/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ category, conversion, value })
+            });
+            const data = await response.json();
+            if (data.result !== undefined) {
+                document.getElementById('resultContainer').innerHTML = `<p>Result: ${data.result}</p>`;
+            } else {
+                document.getElementById('resultContainer').innerHTML = `<p>Error: ${data.error}</p>`;
+            }
+        });
+
+        // Fetch conversion options on page load
+        fetchConversionOptions();
+    </script>
+</body>
+</html>

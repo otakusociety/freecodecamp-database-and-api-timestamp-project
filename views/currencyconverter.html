@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Currency Converter</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
+    <link href="style-currencyconverter.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="container">
+        <h2>Currency Converter</h2>
+        <form id="convertForm">
+            <label for="from">From:</label>
+            <select id="from" name="from">
+                <!-- Options will be populated dynamically -->
+            </select>
+            <label for="to">To:</label>
+            <select id="to" name="to">
+                <!-- Options will be populated dynamically -->
+            </select>
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" name="amount" required />
+            <button type="submit">Convert</button>
+        </form>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">
+        <p>
+            By <a href="http://www.freecodecamp.com/">otakusociety</a>
+        </p>
+    </div>
+    <script>
+        async function fetchCurrencyOptions() {
+            try {
+                const response = await fetch('/api/currency-options');
+                const currencies = await response.json();
+                updateCurrencyOptions(currencies);
+            } catch (error) {
+                console.error('Error fetching currency options:', error);
+            }
+        }
+
+        function updateCurrencyOptions(currencies) {
+            const fromSelect = document.getElementById('from');
+            const toSelect = document.getElementById('to');
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+            currencies.forEach(currency => {
+                const fromOption = document.createElement('option');
+                fromOption.value = currency.code;
+                fromOption.text = `${currency.name} (${currency.code})`;
+                fromSelect.add(fromOption);
+
+                const toOption = document.createElement('option');
+                toOption.value = currency.code;
+                toOption.text = `${currency.name} (${currency.code})`;
+                toSelect.add(toOption);
+            });
+        }
+
+        document.getElementById('convertForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const amount = document.getElementById('amount').value;
+            try {
+                const response = await fetch('/api/convert-currency', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ from, to, amount })
+                });
+                const data = await response.json();
+                if (data.result !== undefined) {
+                    document.getElementById('resultContainer').innerHTML = `<p>Result: ${data.result}</p>`;
+                } else {
+                    document.getElementById('resultContainer').innerHTML = `<p>Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error converting currency:', error);
+                document.getElementById('resultContainer').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+
+        // Fetch currency options on page load
+        fetchCurrencyOptions();
+    </script>
+</body>
+</html>
