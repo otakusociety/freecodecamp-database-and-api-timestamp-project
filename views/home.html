@@ -6,6 +6,25 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
     <link href="style-home.css" rel="stylesheet" type="text/css">
     <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+        margin: 0;
+      }
+      .container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 400px;
+      }
+      h1, h2 {
+        text-align: center;
+      }
       .numbered-list {
         list-style-type: decimal;
         padding-left: 20px;
@@ -13,12 +32,16 @@
       .numbered-list li {
         margin-bottom: 10px;
       }
+      .footer {
+        margin-top: 20px;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
-    <h1>otakusociety's portfolio Microservices App</h1>
-    <hr />
     <div class="container">
+      <h1>otakusociety's portfolio Microservices App</h1>
+      <hr />
       <h2>Available Microservices:</h2>
       <ul class="numbered-list">
         <li><a href="/timestamp">Timestamp Microservice</a></li>
