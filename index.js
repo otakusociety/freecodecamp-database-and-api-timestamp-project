@@ -655,7 +655,7 @@ app.get("/api/currency-options", (req, res) => {
 });
 
 // API endpoint to handle currency conversion requests
-app.post("/api/convert-currency", async (req, res) => {
+app.post("/api/convertcurrency", async (req, res) => {
   const { from, to, amount } = req.body;
   if (!from || !to || amount === undefined) {
     return res.status(400).json({ error: "Invalid request" });
