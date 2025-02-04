@@ -18,9 +18,17 @@
         <p>Please Upload a File ...</p>
         <div class="view">
             <h4 id="output"></h4>
-            <form action="/api/fileanalyse" method="POST" enctype="multipart/form-data">
-                <input type="file" name="upfile" required/>
+            <form action="/file-metadata/api/fileanalyse" method="POST" enctype="multipart/form-data">
+                <input type="file" name="upfile" />
                 <button type="submit">Upload</button>
+            </form>
+        </div>
+        <h3>Download a File:</h3>
+        <p>Enter the File ID to download:</p>
+        <div class="view">
+            <form id="downloadForm">
+                <input type="text" id="fileId" name="fileId" placeholder="Enter File ID" />
+                <button type="button" onclick="downloadFile()">Download</button>
             </form>
         </div>
     </div>
@@ -29,6 +37,16 @@
             By <a href="http://www.freecodecamp.com/">otakusociety</a>
         </p>
     </div>
+    <script>
+        function downloadFile() {
+            const fileId = document.getElementById('fileId').value;
+            if (fileId) {
+                window.location.href = `/file-metadata/api/file/${fileId}`;
+            } else {
+                alert('Please enter a valid File ID');
+            }
+        }
+    </script>
 </body>
 
 </html>

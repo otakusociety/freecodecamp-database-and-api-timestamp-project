@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Generator</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
+    <link href="style-qrcode.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="container">
+        <h2>QR Code Generator</h2>
+        <form id="qrForm">
+            <input type="text" id="url" name="url" placeholder="Enter URL" required />
+            <button type="submit">Generate QR Code</button>
+        </form>
+        <div id="qrCodeContainer"></div>
+    </div>
+    <div class="footer">
+        <p>
+            By <a href="http://www.freecodecamp.com/">otakusociety</a>
+        </p>
+    </div>
+    <script>
+        document.getElementById('qrForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            const response = await fetch('/api/qrcode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            });
+            const data = await response.json();
+            if (data.qrCode) {
+                document.getElementById('qrCodeContainer').innerHTML = `<img src="${data.qrCode}" alt="QR Code" />`;
+            } else {
+                document.getElementById('qrCodeContainer').innerHTML = `<p>Error: ${data.error}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

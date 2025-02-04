@@ -9,6 +9,8 @@ const dns = require('dns');
 const url = require('url');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const QRCode = require('qrcode');
 
 dotenv.config();
 
@@ -500,6 +502,37 @@ app.get("/api/exercise/exercises/:userId", async (req, res) => {
 });
 
 
+const fileSchema = new mongoose.Schema({
+  originalname: String,
+  mimetype: String,
+  size: Number,
+  path: String
+});
+
+const File = mongoose.model('File', fileSchema);
+
+
+
+// Serve the QR code generator page
+app.get("/qrcode", (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'qrcode.html'));
+});
+
+// API endpoint to generate QR code
+app.post("/api/qrcode", async (req, res) => {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: "No URL provided" });
+  }
+
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(url);
+    res.json({ qrCode: qrCodeDataURL });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate QR code" });
+  }
+});
 
 
 
@@ -508,7 +541,7 @@ app.get("/filemetadata", (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'filemetadata.html'));
 });
 // API endpoint to handle file metadata requests
-app.post("/api/fileanalyse", upload.single('upfile'), (req, res) => {
+app.post("/file-metadata/api/fileanalyse", upload.single('upfile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -516,11 +549,41 @@ app.post("/api/fileanalyse", upload.single('upfile'), (req, res) => {
   const file = req.file;
   console.log(`Received file: ${file.originalname}`);
 
-  res.json({
-    name: file.originalname,
-    type: file.mimetype,
-    size: file.size
+  // Save file metadata to the database
+  const newFile = new File({
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size,
+    path: file.path
   });
+
+  try {
+    const savedFile = await newFile.save();
+    res.json({
+      name: savedFile.originalname,
+      type: savedFile.mimetype,
+      size: savedFile.size,
+      id: savedFile._id
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// API endpoint to download a file by ID
+app.get("/file-metadata/api/file/:id", async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    res.download(file.path, file.originalname);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // Middleware to prefix /file-metadata to the routes
@@ -562,6 +625,8 @@ app.get("/api/:date?", (req, res) => {
   }
 });
 
+
+
 // Catch-all route for unmatched paths
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
@@ -572,5 +637,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
