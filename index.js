@@ -26,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 // parse application/json
 app.use(express.json());
 
+let highscore = 0;
 
 // Set up multer for file uploads
 const upload = multer({ dest: 'uploads/' });
@@ -715,6 +716,27 @@ app.post("/api/calculate", (req, res) => {
   res.json({ result });
 });
 
+
+// Serve the Snake game page
+app.get("/snake", (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'snake.html'));
+});
+
+// API endpoint to get the highscore
+app.get("/api/highscore", (req, res) => {
+  res.json({ highscore });
+});
+
+// API endpoint to update the highscore
+app.post("/api/highscore", (req, res) => {
+  const { score } = req.body;
+  if (score > highscore) {
+    highscore = score;
+  }
+  res.json({ highscore });
+});
+
+
 // Serve the timestamp microservice page
 app.get("/timestamp", (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'timestamp.html'));
@@ -747,6 +769,7 @@ app.get("/api/:date?", (req, res) => {
     res.json({ unix: date.getTime(), utc: date.toUTCString() });
   }
 });
+
 
 
 
